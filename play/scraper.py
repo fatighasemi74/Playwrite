@@ -15,17 +15,26 @@ def test_website():
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         
-        base_url = "http://127.0.0.1:8080"
+        base_url = "http://127.0.0.1:8000"
         response = requests.get(base_url)
         soup = BeautifulSoup(response.text, 'html.parser')
         links = soup.find_all('a')
-        for link in links:
-            urls = [link.get('href') for link in links if link.get('href') is not None]
-            for url in urls:
-                main_url = base_url + url
-                response = page.goto(main_url)
-                print(response)
 
-                assert response.status == 200 
-                
+        unique_urls = set()
+
+        for link in links:
+            href = link.get('href')
+            if href and not href.startswith("http"):
+                full_url = base_url + href if href.startswith('/') else base_url + '/' + href
+                unique_urls.add(full_url)
+            elif href:
+                unique_urls.add(href)
+
+        for url in unique_urls:
+            response = page.goto(url)
+            print(f"Visited {url}, status: {response.status}")
+            # urls = [link.get('href') for link in links if link.get('href') is not None]
+
+            assert response.status == 200 
+
         browser.close()
