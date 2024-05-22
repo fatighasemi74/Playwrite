@@ -14,6 +14,8 @@ def test_website():
         # button = page.get_by_role('button', name="Suggest it")
         # button.highlight()
         # button.click()
+        # button.dbclick()
+        # button.click(modifiers=["shift"])
 
         # Books & Audible
         # heading = page.get_by_role('heading', name="Books & Audible")
@@ -30,5 +32,11 @@ def test_website():
         # page.locator("css=a").highlight()
         # page.locator("h1:text('Appliance')").click()
         # page.locator("xpath=//h1").highlight()
+
+        # fill input fields
+        register_url = base_url + "signup"
+        page.goto(register_url)
+        page.get_by_label("First Name :").highlight()
+        page.locator("footer").highlight()
 
         browser.close()    
