@@ -12,10 +12,14 @@ from bs4 import BeautifulSoup
 
 def test_website():
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        # launch a browser
+        browser = p.chromium.launch(headless=False, slow_mo=500)
+        # create a new page
         page = browser.new_page()
-        
         base_url = "http://127.0.0.1:8000"
+
+    
+        # get all urls in homepage
         response = requests.get(base_url)
         soup = BeautifulSoup(response.text, 'html.parser')
         links = soup.find_all('a')
@@ -33,8 +37,6 @@ def test_website():
         for url in unique_urls:
             response = page.goto(url)
             print(f"Visited {url}, status: {response.status}")
-            # urls = [link.get('href') for link in links if link.get('href') is not None]
-
             assert response.status == 200 
 
         browser.close()
