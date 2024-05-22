@@ -9,15 +9,26 @@ def test_website():
         page = browser.new_page()
         base_url = "https://jooyak.netlify.app/"
         page.goto(base_url)
-        
+
         # locate a link element with " Suggest it " text
-        button = page.get_by_role('button', name="Suggest it")
-        button.highlight()
-        button.click()
+        # button = page.get_by_role('button', name="Suggest it")
+        # button.highlight()
+        # button.click()
 
         # Books & Audible
-        heading = page.get_by_role('heading', name="Books & Audible")
-        heading.highlight()
-        heading.click()
+        # heading = page.get_by_role('heading', name="Books & Audible")
+        # heading.highlight()
+        # heading.click()
+
+        # fill the input
+        # url = base_url + "signup"
+        # page.goto(url)
+        # email_input = page.get_by_label("First Name :")
+        # email_input.highlight()
+
+        # css elements
+        # page.locator("css=a").highlight()
+        # page.locator("h1:text('Appliance')").click()
+        # page.locator("xpath=//h1").highlight()
 
         browser.close()    
