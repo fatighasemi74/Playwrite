@@ -1,5 +1,6 @@
-from playwright.sync_api import sync_playwright
 import requests
+import logging
+from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 
 # def test_adidas(playwright: sync_playwright):
@@ -9,6 +10,8 @@ from bs4 import BeautifulSoup
 #     assert response.status == 200
 #     assert response.status_text == 'OK'
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 def test_website():
     with sync_playwright() as p:
@@ -21,6 +24,10 @@ def test_website():
     
         # get all urls in homepage
         response = requests.get(base_url)
+        if response.status_code != 200:
+            logger.error(f"Failed to retrieve base page with status code {response.status_code}")
+            return
+
         soup = BeautifulSoup(response.text, 'html.parser')
         links = soup.find_all('a')
 
@@ -36,7 +43,10 @@ def test_website():
 
         for url in unique_urls:
             response = page.goto(url)
-            print(f"Visited {url}, status: {response.status}")
-            assert response.status == 200 
+            if response.status == 200:
+                logger.info(f"Successfully visited {url}, status: {response.status}")
+            else:
+                logger.error(f"Failed to visit {url}, status: {response.status}")
+            assert response.status == 200
 
         browser.close()
