@@ -1,4 +1,5 @@
 import requests
+import json
 import logging
 import pandas as pd
 from playwright.sync_api import sync_playwright
@@ -33,26 +34,33 @@ def test_website():
                 unique_urls.add(full_url)
             elif href:
                 unique_urls.add(href)
-
+        data = []
         for url in unique_urls:
             response = page.goto(url)
-            data = []
+
+            
             if response.status == 200:
                 logger.info(f"Successfully visited {url}, status: {response.status}")
                 h3_elements = page.locator('div.shopdesc h3')
-                h3_texts = h3_elements.all_text_contents()
-                for text in h3_texts:
+                # Evaluate each h3 element to extract the shop name and URL / Javascript function
+                shop_entries = h3_elements.evaluate_all('''elements => elements.map(element => {
+                    const shopName = element.firstChild.textContent.trim();  // First child assumed to be the text node
+                    const shopUrl = element.querySelector('a') ? element.querySelector('a').href : '';  // URL from the <a> tag
+                    return { shopName, shopUrl };
+                })''')
+                for entry in shop_entries:
+                    data.append({'Shop Name': entry['shopName'], 'URL': entry['shopUrl']})
                     
-                    data.append({'URL': url, 'Shop Name': text})
-                    # data.append({'Shop Name': text})
+                # without Javascript function
+                # h3_texts = h3_elements.all_text_contents()
+                # for text in h3_texts:
+                #     data.append({'Shop Name': text})
             else:
                 logger.error(f"Failed to visit {url}, status: {response.status}")
             assert response.status == 200
-            # Creating DataFrame
+
+        browser.close()  
+
+        # Creating DataFrame and save into xlsx file
         df = pd.DataFrame(data)
-    
-        # Saving to Excel
-        df.to_excel('shop_names.xlsx', index=False)
-
-
-        browser.close()    
+        df.to_excel('shop_names.xlsx', index=False) 
