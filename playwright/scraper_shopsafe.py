@@ -16,19 +16,20 @@ def test_website():
         # create a new page
         page = browser.new_page()
         base_url = "https://www.shopsafe.co.uk"
-        page.goto(base_url)
+        
         # get all urls in homepage
-        response = requests.get(base_url + "/shops-a-z")
+        response = requests.get(base_url)
         if response.status_code != 200:
             logger.error(f"Failed to retrieve base page with status code {response.status_code}")
             return
+        page.goto(f"{base_url}/shops-a-z")
 
-        soup = BeautifulSoup(response.text, 'html.parser')
-        links = soup.find_all('a', class_="alphabet")
+
+        links_elements = page.query_selector_all('a.alphabet')
         unique_urls = set()
 
-        for link in links:
-            href = link.get('href')
+        for link in links_elements:
+            href = link.get_attribute('href')
             if href and not href.startswith("http"):
                 full_url = base_url + href if href.startswith('/') else base_url + '/' + href
                 unique_urls.add(full_url)
@@ -36,30 +37,19 @@ def test_website():
                 unique_urls.add(href)
         data = []
         for url in unique_urls:
-            response = page.goto(url)
+            page.goto(url)
+            shop_elements = page.locator('div.shopdesc h3')
+            count = shop_elements.count()
 
-            
-            if response.status == 200:
-                logger.info(f"Successfully visited {url}, status: {response.status}")
-                h3_elements = page.locator('div.shopdesc h3')
-                # Evaluate each h3 element to extract the shop name and URL / Javascript function
-                shop_entries = h3_elements.evaluate_all('''elements => elements.map(element => {
-                    const shopName = element.firstChild.textContent.trim();  // First child assumed to be the text node
-                    const shopUrl = element.querySelector('a') ? element.querySelector('a').href : '';  // URL from the <a> tag
-                    return { shopName, shopUrl };
-                })''')
-                for entry in shop_entries:
-                    data.append({'Shop Name': entry['shopName'], 'URL': entry['shopUrl']})
-                    
-                # without Javascript function
-                # h3_texts = h3_elements.all_text_contents()
-                # for text in h3_texts:
-                #     data.append({'Shop Name': text})
-            else:
-                logger.error(f"Failed to visit {url}, status: {response.status}")
-            assert response.status == 200
+            for i in range(count):
+                # Extract the shop name
+                shop_name = shop_elements.nth(i).text_content().strip() if shop_elements.nth(i) else ""
+                # Assuming the link is within the same h3 element
+                shop_url = shop_elements.nth(i).locator('a').get_attribute('href') if shop_elements.nth(i).locator('a') else ""
+                data.append({'Shop name': shop_name, 'URL': shop_url})
 
-        browser.close()  
+
+        browser.close()
 
         # Creating DataFrame and save into xlsx file
         df = pd.DataFrame(data)
